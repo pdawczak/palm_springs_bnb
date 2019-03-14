@@ -1,0 +1,10 @@
+numpy==1.16.2
+pbr==5.1.2
+scikit-learn==0.20.2
+scipy==1.2.1
+six==1.12.0
+sklearn-porter==0.7.2
+stevedore==1.30.0
+virtualenv==16.4.0
+virtualenv-clone==0.5.1
+virtualenvwrapper==4.8.4
