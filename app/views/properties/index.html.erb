@@ -1,0 +1,48 @@
+<p id="notice"><%= notice %></p>
+
+<h1 style="margin-bottom: 80px">
+    Properties
+
+    <small>(<%= link_to "Add new", new_property_path %>)</small>
+</h1>
+
+<% @properties_by_city.each do |(city, properties)| %>
+    <h3><%= city %></h3>
+    <table class="properties" style="margin-bottom: 50px">
+        <thead>
+            <tr>
+                <th>Num of <br/> Bedrooms / Beds</th>
+                <th>Num of <br/> Bathrooms</th>
+                <th>Max <br/> People</th>
+                <th>Nightly <br/> price</th>
+                <th>Weeknight <br/> price</th>
+                <th>Weekend night <br/> price</th>
+                <th>Weekly <br/>price</th>
+                <th>Monthly <br/>price</th>
+                <th colspan="3"></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <% properties.each do |property| %>
+                <tr>
+                    <td style="text-align:right">
+                        <%= property.number_of_bedrooms.to_i %> /
+                        <%= property.number_of_beds.to_i %>
+                    </td>
+                    <td style="text-align:right"><%= property.number_of_bathrooms.to_i %></td>
+                    <td style="text-align:right"><%= property.number_of_people %></td>
+                    <td style="text-align:right"><%= number_to_currency(property.nightly_price) %></td>
+                    <td style="text-align:right"><%= number_to_currency(property.weeknight_price) %></td>
+                    <td style="text-align:right"><%= number_to_currency(property.weekend_night_price) %></td>
+                    <td style="text-align:right"><%= number_to_currency(property.weekly_price) %></td>
+                    <td style="text-align:right"><%= number_to_currency(property.monthly_price) %></td>
+                    <td><%= link_to "Show Details >>>", property %></td>
+                </tr>
+            <% end %>
+        </tbody>
+    </table>
+<% end %>
+
+<br>
+

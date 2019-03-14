@@ -1,0 +1,53 @@
+<p id="notice"><%= notice %></p>
+
+<p style="display: inline">
+    Property located in
+    <h2 style="display: inline"><%= @property.city %></h2>
+</p>
+
+<br />
+
+<p>
+    <strong>Number of beds:</strong>
+    <%= @property.number_of_beds.to_i %>
+</p>
+
+<p>
+    <strong>Number of bathrooms:</strong>
+    <%= @property.number_of_bathrooms.to_i %>
+</p>
+
+<p>
+    <strong>Number of bedrooms:</strong>
+    <%= @property.number_of_bedrooms %>
+</p>
+
+<p>
+    <strong>Number of people:</strong>
+    <%= @property.number_of_people %>
+</p>
+
+<br/>
+
+<p>
+    <strong>Pricing:</strong>
+
+    <table class="properties">
+        <tr>
+            <th>Nightly <br/> price</th>
+            <th>Weeknight <br/> price</th>
+            <th>Weekend night <br/> price</th>
+            <th>Weekly <br/>price</th>
+            <th>Monthly <br/>price</th>
+        </tr>
+        <tr>
+            <td style="text-align: right"><%= number_to_currency(@property.nightly_price) %></td>
+            <td style="text-align: right"><%= number_to_currency(@property.weeknight_price) %></td>
+            <td style="text-align: right"><%= number_to_currency(@property.weekend_night_price) %></td>
+            <td style="text-align: right"><%= number_to_currency(@property.weekly_price) %></td>
+            <td style="text-align: right"><%= number_to_currency(@property.monthly_price) %></td>
+        </tr>
+    </table>
+</p>
+
+<%= link_to "Back to list of Properties", properties_path %>

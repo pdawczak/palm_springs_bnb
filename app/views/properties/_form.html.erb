@@ -1,0 +1,45 @@
+<%= form_with(model: property, local: true) do |form| %>
+    <% if property.errors.any? %>
+        <div id="error_explanation">
+            <h2><%= pluralize(property.errors.count, "error") %> prohibited this property from being saved:</h2>
+
+            <ul>
+                <% property.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                <% end %>
+            </ul>
+        </div>
+    <% end %>
+
+    <div class="field">
+        <%= form.label :city %>
+        <%= form.select :city, ['Palm Springs', 'N Palm Springs',
+                                'Downtown Palm Springs Vacation Rentals',
+                                'Palm Springs/carhedral City',
+                                'Palm Springs Villas I Vacation Rentals'], id: :property_city %>
+    </div>
+
+    <div class="field">
+        <%= form.label :number_of_bedrooms %>
+        <%= form.select :number_of_bedrooms, (1..10), id: :property_number_of_bedrooms %>
+    </div>
+
+    <div class="field">
+        <%= form.label :number_of_beds %>
+        <%= form.select :number_of_beds, (1..11), id: :property_number_of_beds %>
+    </div>
+
+    <div class="field">
+        <%= form.label :number_of_people %>
+        <%= form.select :number_of_people, (1..15), id: :property_number_of_people %>
+    </div>
+
+    <div class="field">
+        <%= form.label :number_of_bathrooms %>
+        <%= form.select :number_of_bathrooms, (1..13), id: :property_number_of_bathrooms %>
+    </div>
+
+    <div class="actions">
+        <%= form.submit %>
+    </div>
+<% end %>

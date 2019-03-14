@@ -1,0 +1,25 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  number_of_beds: 1.5
+  number_of_bathrooms: 1.5
+  number_of_bedrooms: 1
+  number_of_people: 1
+  city: MyString
+  nightly_price: 9.99
+  weeknight_price: 9.99
+  weekend_night_price: 9.99
+  weekly_price: 9.99
+  monthly_price: 9.99
+
+two:
+  number_of_beds: 1.5
+  number_of_bathrooms: 1.5
+  number_of_bedrooms: 1
+  number_of_people: 1
+  city: MyString
+  nightly_price: 9.99
+  weeknight_price: 9.99
+  weekend_night_price: 9.99
+  weekly_price: 9.99
+  monthly_price: 9.99

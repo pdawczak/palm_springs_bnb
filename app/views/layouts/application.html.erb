@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>PalmSpringsBnb</title>
-    <%= csrf_meta_tags %>
+    <head>
+        <title>PalmSpringsBnB</title>
+        <%= csrf_meta_tags %>
 
-    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
-    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
-  </head>
+        <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+        <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+    </head>
 
-  <body>
-    <%= yield %>
-  </body>
+    <body>
+        <h2 style="margin-bottom: 100px">
+            <%= link_to "PalmSpringsBnB", root_path %>
+            <small>- Find homes in Palm Springs</small>
+        </h2>
+        <%= yield %>
+    </body>
 </html>
