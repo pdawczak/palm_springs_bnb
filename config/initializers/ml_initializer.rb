@@ -1,5 +1,3 @@
-p "Initializing ML"
-p `PYTHON --version`
-p "AFTER COMMAND"
+print "=> Initializing ML\n"
 Ml.estimator = Ml::Estimator.new
-p "Finished ML initialization"
+print "=> Finished ML initialization\n"
