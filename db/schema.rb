@@ -21,11 +21,11 @@ ActiveRecord::Schema.define(version: 20190314082413) do
     t.integer "number_of_bedrooms"
     t.integer "number_of_people"
     t.string "city"
-    t.decimal "nightly_price", precision: 6, scale: 2
-    t.decimal "weeknight_price", precision: 6, scale: 2
-    t.decimal "weekend_night_price", precision: 6, scale: 2
-    t.decimal "weekly_price", precision: 6, scale: 2
-    t.decimal "monthly_price", precision: 6, scale: 2
+    t.decimal "nightly_price", precision: 10, scale: 2
+    t.decimal "weeknight_price", precision: 10, scale: 2
+    t.decimal "weekend_night_price", precision: 10, scale: 2
+    t.decimal "weekly_price", precision: 10, scale: 2
+    t.decimal "monthly_price", precision: 10, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
