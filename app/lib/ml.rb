@@ -1,7 +1,4 @@
 class Ml
-  def self.predict
-  end
-
   def self.estimate_prices(property)
     predictions = 
       estimator.predict(
