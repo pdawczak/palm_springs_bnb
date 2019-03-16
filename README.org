@@ -11,8 +11,7 @@ weeknight price and nightly price:
 The Machine Learning model has been trained on the [[https://www.kaggle.com/datafiniti/palm-springs-vacation-rentals][Palm Springs Vacation Rentals]]
 dataset available on Kaggle.
 
-This application uses [PyCall](https://github.com/mrkn/pycall.rb) Ruby gem that
-allows calling Python code from Ruby.
+This application uses [[https://github.com/mrkn/pycall.rb/issues/62#issuecomment-377846006][PyCall]] Ruby gem that allows calling Python code from Ruby.
 
 Unfortunately, due to requirements /how Python should be installed/ to allow
 accessing from Ruby, the way [[https://github.com/mrkn/pycall.rb/issues/62#issuecomment-377846006][it is installed on Heroku]], it wasn't possible to
