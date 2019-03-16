@@ -1,0 +1,289 @@
+* PalmSpringsBnB
+
+[[./docs/assets/ruby_less_3_python.png]]
+
+A Machine Learning powered project, that based on information about your property,
+will suggest 5 different prices: weekly price, weekend night price, monthly price,
+weeknight price and nightly price:
+
+[[https://img.youtube.com/vi/ggG5sFgQwDM/0.jpg]]
+
+The Machine Learning model has been trained on the [[https://www.kaggle.com/datafiniti/palm-springs-vacation-rentals][Palm Springs Vacation Rentals]]
+dataset available on Kaggle.
+
+This application uses [PyCall](https://github.com/mrkn/pycall.rb) Ruby gem that
+allows calling Python code from Ruby.
+
+Unfortunately, due to requirements /how Python should be installed/ to allow
+accessing from Ruby, the way [[https://github.com/mrkn/pycall.rb/issues/62#issuecomment-377846006][it is installed on Heroku]], it wasn't possible to
+deploy it with default settings. 
+
+For this technical restriction, I recorded short demo how it works, and it is
+available [[https://youtu.be/ggG5sFgQwDM][on Youtube here]].
+
+Whole source code of the application is available [[https://github.com/pdawczak/palm_springs_bnb][on Github]], and whole research
+is available [[https://github.com/pdawczak/palm_springs_bnb/blob/master/ML/Palm_Springs_Pricing.ipynb][in this Jupyter Notebook]].
+
+** Training the Model
+
+1. For training the model, following features were selected (here it shows their
+   correlation to the target ~"price~ we want to predict):
+
+   #+BEGIN_SRC python
+   df.corr()["price"].sort_values(ascending=False)
+   price          1.000000
+   numBed         0.447529
+   numBathroom    0.301408
+   numBedroom     0.284166
+   numPeople      0.241956
+   #+END_SRC
+
+2. The model's accuracy achieved was as follows:
+
+   | Model            | TRAIN Accuracy | TEST Accuracy |
+   |------------------+----------------+---------------|
+   | Decision Tree    |         80.04% | 78.39%        |
+   | Random Forest    |         80.04% | 78.44%        |
+   | LinearRegression |         35.23% | -             |
+   | Ridge            |         35.23% | -             |
+
+3. Choosing the model.
+
+   The table shows accuracy achieved both on Train and Test set (there are no result
+   for ~LinearRegression~ and ~Ridge~ models for tests sets because they were not
+   performing well on the train sets).
+
+   As expected - the accuracy is a bit lower on the Test set (the data the model
+   didn't see before), but the difference to the accuracy achieved when training
+   the model isn't too big at that point so it doesn't look like the models were
+   prone to the overfitting.
+
+   We will productionise the ~RandomForest~ as it has slightly better score.
+
+** Deploy the Model
+
+   Because ~PyCall~ allows calling Python code from Ruby like it was native to it,
+   we can export the required pre-trained ~pipeline~ and ~estimator~ from ~Jupyter~.
+
+*** What is ~pipeline~ and ~estimator~
+
+To allow Machine Learning models perform predictions, it is required the data is
+passed in certain format. It's not uncommon, that the shape of the data passed
+by user will have to change before passing to the model to performing predictions.
+
+Assuming the user created a new property with following data:
+
+| numBed | numBathroom | numBedroom | numPeople | city          |
+|--------+-------------+------------+-----------+--------------|
+|      1 |           1 |          1 |         2 | Palm Springs  |
+
+It will have to be transformed to something like:
+
+| 1 | 1 | 1 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
+
+The rules of encoding are not important at the moment, because it's the job of
+the ~pipeline~ that will know how to turn the first table in the second one.
+
+It's the last table that will be passed to the ~estimatot~ (our Model) that will
+perform the predictions.
+
+*** Serializing ~pipeline~ and ~estimator~
+
+   #+BEGIN_SRC python
+   # in Jupyter
+   import pickle
+
+   pickle.dump(index_based_pipeline, open('idx_pipeline.pickle', 'wb'))
+
+   pickle.dump(final_estimator, open('model.pickle', 'wb'))
+   #+END_SRC
+
+*** Ruby class that will use the Python exported code:
+
+   #+BEGIN_SRC ruby
+   # app/lib/ml/estimator.rb
+   require "pycall/import"
+   include PyCall::Import
+
+   class Ml::Estimator
+     def initialize
+       @pipeline = initialize_pipeline   # 1.
+       @estimator = initialize_estimator # 2.
+
+       @all_periods = ["Monthly", "Nightly", "Weekend night", "Weekly", "Weeknight"]
+     end
+
+     def predict(num_bed, num_bathroom, num_bedroom, num_people, city) # 3.
+       all_variants = @all_periods.map { |period|   # 4.
+         [num_bed, num_bathroom, num_bedroom, num_people, city, period] }
+
+       prepared = @pipeline.transform(all_variants) # 5.
+       predicted = @estimator.predict(prepared)     # 6.
+       @all_periods.each_with_index                 # 7.
+         .each_with_object({}) { |(period, idx), result| 
+           result[period] = predicted[idx]
+         }
+     end
+
+     def initialize_pipeline                                 # 1.
+       pyimport :pickle                                      #
+       pipeline_pkl = open("./ML/idx_pipeline.pickle", "rb") #
+       pickle.load(pipeline_pkl)                             #
+     end                                                     #
+
+     def initialize_estimator                                # 2.
+       pyimport :pickle                                      #
+       estimator_pkl = open("./ML/model.pickle", "rb")       #
+       pickle.load(estimator_pkl)                            #
+     end                                                     #
+   end
+   #+END_SRC
+
+   1. Initialises the pipeline - it will load and instantiate the Python code
+   2. Initialises the estimator - this is similar initialisation for the estimator
+   3. Defines a method that will accept Property parameters (specified by user)
+   4. Prepares 5 variants - enriches the data by appending one of five possible time periods
+   5. Prepares data to the format that will be possible to perform estimations
+   6. Performs predictions
+   7. Turns predictions into format that will be easier to handle by the caller.
+      Result of this will be a hash that will look like:
+
+   #+BEGIN_SRC ruby
+   { "Monthly" => 123.45, 
+     "Nightly" => 123.45,
+     "Weekend night" => 123.45,
+     "Weekly" => 123.45,
+     "Weeknight" => 123.45 }
+   #+END_SRC
+
+*** Ruby code that will allow nicer integration with the rest of the application
+
+    The earlier code loads Python code and knows a lot of low-level details we
+    don't want to expose to the rest of the application, so let's introduce another
+    layer that will facilitate it - it will accept a Property, will extract the
+    data and pass it for predictions, and assign results back to the Property:
+
+    #+BEGIN_SRC ruby
+    # app/lib/ml.rb
+    class Ml
+      def self.estimate_prices(property)
+        predictions = 
+          estimator.predict(
+            property.number_of_beds,
+            property.number_of_bathrooms,
+            property.number_of_bedrooms,
+            property.number_of_people,
+            property.city
+          )
+
+        property.nightly_price = predictions["Nightly"]
+        property.weeknight_price = predictions["Weeknight"]
+        property.weekend_night_price = predictions["Weekend night"]
+        property.weekly_price = predictions["Weekly"]
+        property.monthly_price = predictions["Monthly"]
+
+        property
+      end
+
+      def self.estimator
+        @@estimator
+      end
+
+      def self.estimator=(estimator)
+        @@estimator = estimator
+      end
+    end
+    #+END_SRC
+
+*** Initialising the Ruby's ~Ml::Estimator~
+
+    When checking how long it takes to load the Python code from the files, it is
+    quite slow process. It takes relatively a lot of time and it wouldn't be a good
+    idea to add this time to every predictions we perform.
+
+    To address this issue, we could benefit from Rails initialisation phase.
+
+    Let's add this code:
+
+    #+BEGIN_SRC ruby
+    # config/initializers/ml_initializer.rb
+    Ml.estimator = Ml::Estimator.new
+    #+END_SRC
+
+    This will ensure we will load the code only once, when the Rails server (or
+    any other command, eg. Rake task) is started. Without this additional overhead,
+    all the further predictions will be rapid.
+
+** Summary
+
+*** Learnings
+
+    ~PyCall~ allows great opportunity and much more flexibility for porting Python
+    code to make it available to Ruby applications. As contrary to [[https://medium.com/@pawel_dawczak/deploying-ml-models-for-ruby-applications-ff10a4bd4d1f][Sklearn-porter]],
+    it doesn't have any limitations to what kind of Machine Learning algorithms it
+    can support.
+
+    From my brief experience, with ~PyCall~ I feel the rule: /If you can export/
+    /the code from Jupyter, you will be able to use it in Ruby app/ seems applicable.
+    It is still important to have understanding how the particular model works
+    internally to decide if ~PyCall~ will be a good choice.
+
+    In this example we exported a ~RandomForest~ - it is quite accurate, performant
+    and the generated ~pickle~ code is not very big, but if you consider [[https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html][KNN]],
+    that internally uses the *whole dataset* to make predictions, and this dataset's
+    size is in Gigabytes or Petabytes - could you afford such a server to host
+    your Ruby/Rails application? Would you accept the time it would take to start
+    such an application when it loads this whole dataset to memory?
+
+*** Further considerations
+
+    ~PyCall~ was easy to use, but initial set up might be a bit tricky. I have two
+    distributions of Python installed on my machine - one by [[https://github.com/asdf-vm/asdf][.asdf]] version manager,
+    and [[https://www.anaconda.com/distribution/][Anaconda]]. I had to set up my environment variables (like ~PYTHON~) to point
+    proper executables in order for it to work.
+
+    For this very reason, it wasn't possible to deploy this simple app to Heroku
+    with its default configuration. Maybe Docker would be a way to go forward?
+
+    Secondly, in this exercise I disregarded a lot of data from the original set
+    to build model quickly and try porting the ~pipeline~ and ~estimator~ to use
+    them in Ruby. Unfortunately, the model is not super accurate - around 78.44%
+    accuracy achieved on the test set. I considered it good enough to productionise
+    it and release, to find what are the technical problems with this approach,
+    and most importantly - /if this would even be of interest for future users/,
+    but it is not the model that could be considered final in longer term.
+
+    Now, when it is deployed and available to public use, we can get back to the
+    research and continue improving it while monitoring if it is being used. How
+    much does it matter if it has only 78.44% accuracy, but no one really wants
+    to use it?
+
+*** Ideas for improving the model
+
+    The dataset has many more features which we didn't consider during this exercise.
+    We could spend more effort on extracting data from JSON columns (like property
+    features, additional fees), or extracting some sentiment score from property
+    description.
+
+    At the moment we have only one model that does all the predictions for all
+    the available periods - maybe it would be a good idea to train separate
+    models that we would  focus on the feature importance for a particular
+    time periods?
+
+*** It was fun
+
+    Analysing the data set was great fun, and this little exercise has proven,
+    that it's data cleaning and preparing that is the most time consuming part
+    of building Machine Learning model (it might not sound exciting, but I 
+    actually enjoyed this part - I could understand the market a little bit better!).
+
+    Integrating ready model and seeing it being used from application in such an
+    automatic way that is completely transparent to the end user gives great
+    satisfaction!
+
+    All of it learned and achieved in spare time was a little bit tiring. I guess
+    I deserve some holidays in nice place.
+
+    I've heard Palm Springs is a nice place :).
+
+[[./docs/assets/palm-springs.jpg]]
