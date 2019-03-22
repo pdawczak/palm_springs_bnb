@@ -22,15 +22,17 @@ class Ml::Estimator
     pyimport :pickle
     print "===> [PIPELINE] Initializing\n"
     pipeline_pkl = open("./ML/idx_pipeline.pickle", "rb")
-    pickle.load(pipeline_pkl)
+    loaded = pickle.load(pipeline_pkl)
     print "===> [PIPELINE] Finished initializing\n"
+    loaded
   end
 
   def initialize_estimator
     pyimport :pickle
     print "===> [ESTIMATOR] Initializing\n"
     estimator_pkl = open("./ML/model.pickle", "rb")
-    pickle.load(estimator_pkl)
+    loaded = pickle.load(estimator_pkl)
     print "===> [ESTIMATOR] Finished initializing\n"
+    loaded
   end
 end
